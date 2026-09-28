@@ -1,0 +1,83 @@
+const service = require("./settings.service");
+
+async function settings() {}
+
+async function getLocation(request, response) {
+	const { id } = request.params;
+
+	const validId = /^[1-9]\d*$/.test(id) && BigInt(id) <= 9223372036854775807n;
+	if (!validId || String(request.user.company) !== id) {
+		return response.status(404).json({ success: false, message: "Company location not found" });
+	}
+
+	try {
+		const location = await service.getLocation(id, request.user.company);
+		if (!location) {
+			return response.status(404).json({ success: false, message: "Company location not found" });
+		}
+
+		return response.json({ success: true, data: location });
+	} catch (error) {
+		console.error("Company location query failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to load company location" });
+	}
+}
+
+async function getHrProfile(request, response) {
+	try {
+		const profile = await service.getHrProfile(request.user.sub);
+		if (!profile) {
+			return response.status(404).json({ success: false, message: "HR profile not found" });
+		}
+
+		return response.json({ success: true, data: profile });
+	} catch (error) {
+		console.error("HR profile query failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to load HR profile" });
+	}
+}
+
+async function updateProfile(request, response) {
+	const { id } = request.params;
+	const body = request.body;
+	const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
+	if (!validId) {
+		return response.status(400).json({ success: false, message: "Invalid HR profile ID" });
+	}
+	if (String(request.user.sub) !== id) {
+		return response.status(403).json({ success: false, message: "You can only update your own HR profile" });
+	}
+
+	const fields = ["email", "phone_number", "name"];
+	if (!body || typeof body !== "object" || Array.isArray(body) ||
+			fields.some((field) => typeof body[field] !== "string" || !body[field].trim())) {
+		return response.status(400).json({ success: false, message: "Email, phone_number, and name are required" });
+	}
+
+	try {
+		const profile = await service.updateHrProfile(id, {
+			email: body.email.trim(),
+			phone_number: body.phone_number.trim(),
+			name: body.name.trim(),
+		});
+		if (!profile) {
+			return response.status(404).json({ success: false, message: "HR profile not found" });
+		}
+
+		return response.json({
+			success: true,
+			message: "HR profile updated successfully",
+			data: profile,
+		});
+	} catch (error) {
+		if (error.code === "23505") {
+			return response.status(409).json({ success: false, message: "Email or phone number already exists" });
+		}
+		console.error("HR profile update failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to update HR profile" });
+	}
+}
+
+
+
+module.exports = { settings, getLocation, getHrProfile, updateProfile };
