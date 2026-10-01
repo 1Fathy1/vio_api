@@ -57,4 +57,23 @@ async function deleteById(database, userId, company) {
   return result.rows[0] || null;
 }
 
-module.exports = { findByEmail,findEmployee, findIdByEmail,findById, create, updatePassword, deleteById };
+async function updateDeviceRequest(
+  database,
+  employeeId,
+  value
+) {
+  const result = await database.query(
+    `
+    UPDATE employees
+    SET device_request = $1
+    WHERE id = $2
+    RETURNING *
+    `,
+    [value, employeeId]
+  );
+
+  return result.rows[0] || null;
+}
+
+
+module.exports = { updateDeviceRequest, findByEmail,findEmployee, findIdByEmail,findById, create, updatePassword, deleteById };

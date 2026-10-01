@@ -18,6 +18,14 @@ async function location(database, id) {
   return result.rows[0] || null;
 }
 
+async function attendanceRules(database, id) {
+  const result = await database.query(
+    "SELECT setting_key,setting_value FROM attendance_settings WHERE company_id = $1 ",
+    [id]
+  );
+  return result.rows || null;
+}
+
 async function hrProfile(database, id) {
   const result = await database.query(
     "SELECT id, email, phone_number, name FROM users WHERE id = $1",
@@ -80,5 +88,6 @@ async function hrProfileUpdate(database, id, data) {
 module.exports = {
   location,
   hrProfile,
-  hrProfileUpdate
+  hrProfileUpdate,
+  attendanceRules
 };

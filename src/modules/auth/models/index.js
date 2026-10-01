@@ -5,4 +5,5 @@ module.exports = {
   passwordReset: require("./password-reset.model"),
   otp: require("./otp.model"),
   transaction: require("./transaction.model"),
+  device: require("../../device/device.model")
 };

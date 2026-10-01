@@ -9,7 +9,8 @@ async function upsertCheckIn(database, data) {
     `SELECT id, attendance_date
      FROM attendance_records
      WHERE employee_id = $1
-     AND attendance_date = CURRENT_DATE`,
+     AND attendance_date = CURRENT_DATE
+     AND status = 'حضور'`,
     [data.employee_id]
   );
 
@@ -49,10 +50,18 @@ async function upsertCheckIn(database, data) {
   return result.rows[0];
 }
 
-async function updateCheckOut(database, data) {
+async function updateCheckOut(database, checkId, egyptTime) {
   const result = await database.query(
-    `UPDATE attendance_records SET check_out_time = NOW()
-     WHERE employee_id = $1 AND attendance_date = CURRENT_DATE RETURNING *`, [data.employeeId]
+    `UPDATE attendance_records SET check_out_time = $1, status = 'انصراف'
+     WHERE id = $2 `, [egyptTime, checkId]
+  );
+  return result.rows || null;
+}
+
+async function check(database, checkId) {
+  const result = await database.query(
+    `select * from attendance_records 
+     WHERE id = $1 `, [checkId]
   );
   return result.rows[0] || null;
 }
@@ -90,7 +99,7 @@ async function findRecord(database, id, company) {
 async function listByEmployee(database, data) {
   const result = await database.query(
     `select check_in_time, check_out_time, delay_minutes, attendance_date
-       from attendance_records where employee_id = $1 `, [data]);
+       from attendance_records where employee_id = $1 order by attendance_date desc`, [data]);
   return result.rows || null;
 }
 
@@ -102,7 +111,9 @@ from attendance_records where employee_id = $1 AND delay_minutes > 0 ; `, [id]);
 }
 
 async function location(database, id) {
-  return "ok" ; 
+  const result = await database.query(
+    `select * From locations where company_id = $1 ; `, [id]);
+  return result.rows[0] || null;
 }
 
 // async function createAdjustment(database, data) {
@@ -151,4 +162,4 @@ async function location(database, id) {
 //   return result.rows;
 // }
 
-module.exports = {location, findEmployeeByUser, upsertCheckIn, updateCheckOut, history, findRecord, listByEmployee, listDaleyByEmployee};
+module.exports = {check, location, findEmployeeByUser, upsertCheckIn, updateCheckOut, history, findRecord, listByEmployee, listDaleyByEmployee };

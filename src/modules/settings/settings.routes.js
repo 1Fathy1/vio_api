@@ -9,5 +9,6 @@ router.use(requireAuth);
 router.get("/location/:id", controller.getLocation);
 router.get("/hr-profile", controller.getHrProfile);
 router.put("/hr-profile-update/:id", controller.updateProfile);
+router.get("/attendance-rules", controller.attendanceRules)
 
 module.exports = router;

@@ -1,12 +1,14 @@
 const express = require("express");
 const controller = require("./attendance.controller");
 const { requireAuth } = require("../../middleware/auth.middleware");
+const { verifyRegisteredDevice } = require("../../middleware/device.middleware");
+const { verifyLocation } = require("../../middleware/location.middleware");
 const router = express.Router();
 
 router.use(requireAuth);
 
-router.post("/check-in", controller.checkIn);
-router.post("/check-out", controller.checkOut);
+router.post("/check-in", verifyRegisteredDevice, verifyLocation, controller.checkIn);
+router.post("/check-out", verifyRegisteredDevice, verifyLocation, controller.checkOut);
 router.get("/history", controller.history);
 router.get("/records/:id", controller.details);
 router.get("/employee-list", controller.listByEmployee);

@@ -78,6 +78,20 @@ async function updateProfile(request, response) {
 	}
 }
 
+async function attendanceRules(request, response) {
+	try {
+		const profile = await service.attendanceRules(request.user.company);
+		if (!profile) {
+			return response.status(404).json({ success: false, message: "felid to load the data" });
+		}
+
+		return response.json({ success: true, data: profile });
+	} catch (error) {
+		console.error("HR profile query failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to load HR profile" });
+	}
+}
 
 
-module.exports = { settings, getLocation, getHrProfile, updateProfile };
+
+module.exports = { settings, getLocation, getHrProfile, updateProfile, attendanceRules };

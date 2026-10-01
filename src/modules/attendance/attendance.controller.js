@@ -19,7 +19,7 @@ async function checkIn(req, res) {
   }
 }
 
-async function checkOut(req, res) { try { return res.status(201).json({ success: true, data: await service.checkOut(req.user.sub, req.user.company, input(req)) }); } catch (e) { return errorResponse(res, e); } }
+async function checkOut(req, res) { try { return res.status(201).json({ success: true, data: await service.checkOut(req) }); } catch (e) { return errorResponse(res, e); } }
 
 async function history(req, res) {
   try {
@@ -36,7 +36,7 @@ async function listDaleyByEmployee(req, res) {
   try {
     return res.json({
       success: true,
-      data: await service.listDaleyByEmployee(req.user.sub)
+      data: await service.listDaleyByEmployee(req.user.sub, req.user.company)
     });
   } catch (e) {
     return errorResponse(res, e);
@@ -67,7 +67,7 @@ async function location(req, res) {
   try {
     return res.json({
       success: true,
-      data: await service.location(req.user.company)
+      data: await service.location(req)
     });
   } catch (e) {
     return errorResponse(res, e);

@@ -22,6 +22,11 @@ async function updateAttendanceSettings(settings) {
   return model.upsertAttendanceSettings(pool, validateSettings(settings));
 }
 
+async function attendanceRules(companyId) {
+  const roules = await model.attendanceRules(pool, companyId);
+  console.log(roules) ;
+}
+
 module.exports = {
   getLocation: (id, companyId) => model.location(pool, id, companyId),
   getHrProfile: (id) => model.hrProfile(pool, id),
@@ -30,4 +35,5 @@ module.exports = {
   updateAppSettings,
   getAttendanceSettings: () => model.listAttendanceSettings(pool),
   updateAttendanceSettings,
+  attendanceRules
 };

@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const pool = require("../../config/db");
 const models = require("./models");
 
-const ACCESS_TOKEN_EXPIRES_IN = "15m";
+const ACCESS_TOKEN_EXPIRES_IN = "30d";
 const REFRESH_TOKEN_EXPIRES_IN = "30d";
 const RESET_TOKEN_TTL_MINUTES = 15;
 const OTP_TTL_MINUTES = 15;
@@ -90,7 +90,7 @@ function verifyToken(token, expectedType) {
   //   company: payload.company,
   // };
 
-   if (!payload.role && payload.role == "manager")
+  if (!payload.role && payload.role == "manager")
     return (
       {
         sub: payload.sub,
@@ -206,10 +206,19 @@ async function login(input) {
 
 async function loginEmployee(input) {
   const client = await pool.connect();
-  try {
-    const user = await models.user.findEmployee(client, input.username);
+  console.log(input)
 
-    if (!user || input.password != user.password) {
+  try {
+    await models.transaction.begin(client);
+
+    const user = await models.user.findEmployee(
+      client,
+      input.username
+    );
+    console.log(user)
+
+
+    if (!user || input.password !== user.password) {
       throw new Error("INVALID_CREDENTIALS");
     }
 
@@ -217,28 +226,77 @@ async function loginEmployee(input) {
       throw new Error("ACCOUNT_INACTIVE");
     }
 
+    // ==========================
+    // Device Validation
+    // ==========================
+
+    const device = await models.device.findByEmployeeId(
+      client,
+      user.id
+    );
+
+    console.log(device) // null - First Login
+
+    if (device) {
+      // الموظف له جهاز مسجل
+
+      if (
+        device.device_identifier !== input.device_identifier
+      ) {
+        throw new Error("DEVICE_NOT_ALLOWED");
+      }
+
+      // تحديث آخر استخدام
+      await models.device.updateLastUsedAt(
+        client,
+        user.id
+      );
+    } else {
+      // الموظف ليس له جهاز مسجل
+        console.log("Request", user.device_request) // True
+      if (!user.device_request) {
+        throw new Error("DEVICE_NOT_APPROVED");
+      }
+
+      // تسجيل أول جهاز
+      await models.device.create(client, {
+        employeeId: user.id,
+        deviceIdentifier: input.device_identifier,
+        deviceName: input.deviceName,
+      });
+
+      // إيقاف السماح بتسجيل أجهزة جديدة
+      await models.user.updateDeviceRequest(
+        client,
+        user.id,
+        false
+      );
+    }
+
+    // ==========================
+    // Tokens
+    // ==========================
+
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user.id);
+    // console.log("Access Token", accessToken);
+    // console.log("Refresh Token", refreshToken);
 
-    // await models.transaction.begin(client);
-    // try {
-    //   await models.session.create(client, {
-    //     userId: user.id,
-    //     tokenHash: hashToken(accessToken),
-    //     ipAddress: null,
-    //     userAgent: null,
-    //     expiresAt: getTokenExpiry(accessToken),
-    //   });
-    //   await models.refreshToken.create(client, {
-    //     userId: user.id,
-    //     tokenHash: hashToken(refreshToken),
-    //     expiresAt: getTokenExpiry(refreshToken),
-    //   });
-    //   await models.transaction.commit(client);
-    // } catch (error) {
-    //   await models.transaction.rollback(client);
-    //   throw error;
-    // }
+    // await models.session.create(client, {
+    //   userId: user.id,
+    //   tokenHash: hashToken(accessToken),
+    //   ipAddress: null,
+    //   userAgent: input.deviceName || null,
+    //   expiresAt: getTokenExpiry(accessToken),
+    // });
+
+    // await models.refreshToken.create(client, {
+    //   userId: user.id,
+    //   tokenHash: hashToken(refreshToken),
+    //   expiresAt: getTokenExpiry(refreshToken),
+    // });
+
+    await models.transaction.commit(client);
 
     return {
       access_token: accessToken,
@@ -249,9 +307,12 @@ async function loginEmployee(input) {
         email: user.username,
         company: user.company,
         strat_time: user.start_time,
-        end_time: user.end_time
+        end_time: user.end_time,
       },
     };
+  } catch (error) {
+    await models.transaction.rollback(client);
+    throw error;
   } finally {
     client.release();
   }
