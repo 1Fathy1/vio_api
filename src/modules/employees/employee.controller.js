@@ -57,8 +57,8 @@ async function create(request, response) {
 }
 
 async function update(request, response) {
-  try { return response.json({ success: true, data: await service.update(request.params.id, request.body || {}, request.user.company) }); }
-  catch (error) { return errorResponse(response, error); }
+  try { return response.json({ success: true, data: await service.update(request.params.id, request.body , request.user.company) }); }
+  catch (error) { return response.json({ status : false, error : error.message}); }
 }
 
 async function remove(request, response) {

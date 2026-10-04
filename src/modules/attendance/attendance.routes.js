@@ -10,12 +10,13 @@ router.use(requireAuth);
 router.post("/check-in", verifyRegisteredDevice, verifyLocation, controller.checkIn);
 router.post("/check-out", verifyRegisteredDevice, verifyLocation, controller.checkOut);
 router.get("/history", controller.history);
-router.get("/records/:id", controller.details);
+router.get("/history/:id", controller.historyEmployee);
 router.get("/employee-list", controller.listByEmployee);
 router.get("/employee-list-daley", controller.listDaleyByEmployee);
 router.post("/verification-location", controller.location);
 
 
+// router.get("/records/:id", controller.details);
 // router.post("/adjustments", controller.adjust);
 // router.get("/requests", controller.requests);
 // router.post("/requests", controller.requests);

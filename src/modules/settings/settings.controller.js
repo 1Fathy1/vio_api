@@ -23,6 +23,23 @@ async function getLocation(request, response) {
 	}
 }
 
+async function updateLocation(request, response) {
+	try {
+		const location = await service.updateLocation(request.user.company, request.body);
+		return response.json({
+			success: true,
+			message: "Company location updated successfully",
+			data: location,
+		});
+	} catch (error) {
+		if (error.message === "INVALID_LOCATION" || error.message === "INVALID_LOCATION_URL") {
+			return response.status(400).json({ success: false, message: error.message });
+		}
+		console.error("Company location update failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to update company location" });
+	}
+}
+
 async function getHrProfile(request, response) {
 	try {
 		const profile = await service.getHrProfile(request.user.sub);
@@ -92,6 +109,20 @@ async function attendanceRules(request, response) {
 	}
 }
 
+async function updateAttendanceRules(request, response) {
+	try {
+		const profile = await service.updateAttendanceRules(request.user.company, request.body);
+		if (!profile) {
+			return response.status(404).json({ success: false, message: "felid to load the data" });
+		}
+
+		return response.json({ success: true, data: profile });
+	} catch (error) {
+		console.error("HR profile query failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to load HR profile" });
+	}
+}
 
 
-module.exports = { settings, getLocation, getHrProfile, updateProfile, attendanceRules };
+
+module.exports = { updateAttendanceRules, settings, getLocation, updateLocation, getHrProfile, updateProfile, attendanceRules };

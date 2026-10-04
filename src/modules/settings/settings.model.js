@@ -12,10 +12,81 @@ const ATTENDANCE_SETTINGS_TABLE = "attendance_settings";
 
 async function location(database, id) {
   const result = await database.query(
-    "SELECT * FROM public.company WHERE id = $1 ",
+    `
+   SELECT
+    c.id,
+    c.place_name,
+    c.place_location,
+
+    l.id,
+    l.location_url,
+    l.radius_meters
+FROM company c
+LEFT JOIN locations l
+    ON l.company_id = c.id
+WHERE c.id = $1;
+   `,
     [id]
   );
   return result.rows[0] || null;
+}
+
+async function updateLocation(database, companyId, data) {
+  console.log("Location Information", data);
+  console.log("Company Information", data.info);
+console.log(Object.keys(data.info).length);
+
+  const client = await database.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const locationResult = await client.query(
+      `UPDATE locations
+       SET latitude = $1,
+           longitude = $2,
+           radius_meters = $3,
+           location_url = $4
+       WHERE company_id = $5
+       RETURNING company_id, location_url, latitude, longitude, radius_meters`,
+      [
+        data.latitude,
+        data.longitude,
+        data.info.radius_meters,
+        data.locationUrl,
+        companyId,
+      ]
+    );
+
+    let companyResult = null;
+
+    if (Number(data.info?.full_mode) === 1 && Object.keys(data.info).length >= 4) {
+      companyResult = await client.query(
+        `UPDATE company
+         SET place_name = $1,
+             place_location = $2
+         WHERE id = $3
+         RETURNING id, place_name, place_location`,
+        [
+          data.info.place_name,
+          data.info.place_location,
+          companyId,
+        ]
+      );
+    }
+
+    await client.query("COMMIT");
+
+    return {
+      location: locationResult.rows[0],
+      company: companyResult?.rows[0] || null,
+    };
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw new Error("DATA_BASE_EXCEPTION: " + e.message);
+  } finally {
+    client.release();
+  }
 }
 
 async function attendanceRules(database, id) {
@@ -24,6 +95,41 @@ async function attendanceRules(database, id) {
     [id]
   );
   return result.rows || null;
+}
+
+async function updateAttendanceSettings(database, companyId, settings) {
+  const client = await database.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const updatedRows = [];
+
+    for (const [settingKey, settingValue] of Object.entries(settings)) {
+      const result = await client.query(
+        `UPDATE attendance_settings
+         SET setting_value = $1,
+             updated_at = NOW()
+         WHERE company_id = $2
+           AND setting_key = $3
+         RETURNING id, setting_key, setting_value, company_id`,
+        [settingValue, companyId, settingKey]
+      );
+
+      if (result.rows.length) {
+        updatedRows.push(result.rows[0]);
+      }
+    }
+
+    await client.query("COMMIT");
+
+    return updatedRows;
+  } catch (e) {
+    await client.query("ROLLBACK");
+    throw new Error("DATA_BASE_EXCEPTION: " + e.message);
+  } finally {
+    client.release();
+  }
 }
 
 async function hrProfile(database, id) {
@@ -87,7 +193,9 @@ async function hrProfileUpdate(database, id, data) {
 
 module.exports = {
   location,
+  updateLocation,
   hrProfile,
   hrProfileUpdate,
-  attendanceRules
+  attendanceRules,
+  updateAttendanceSettings
 };

@@ -135,8 +135,19 @@ async function update(database, employeeId, data, company) {
 }
 
 async function deleteById(database, employeeId, company) {
-  const result = await database.query("DELETE FROM employees WHERE id = $1 AND company = $2 RETURNING user_id", [employeeId, company]);
-  return result.rows[0] || null;
+
+  const result = await database.query(
+    `DELETE FROM employees
+     WHERE id = $1 AND company = $2
+     RETURNING *`,
+    [employeeId, company]
+  );
+
+  if (result.rowCount === 0) {
+    return null;
+  }
+
+  return result.rows[0];
 }
 
 async function findDepartment(database, departmentId, company) {

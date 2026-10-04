@@ -66,23 +66,34 @@ async function check(database, checkId) {
   return result.rows[0] || null;
 }
 
-async function history(database, company) {
-  const result = await database.query(
-    `SELECT
-    e.name,
-    e.id,
-    ar.attendance_date,
-    ar.check_in_time,
-    ar.check_out_time,
-    ar.status,
-    ar.delay_minutes,
-    ar.deduction_days
-FROM attendance_records ar
-JOIN employees e
-    ON e.id = ar.employee_id
-WHERE ar.company = $1
-ORDER BY ar.attendance_date DESC;`, [company]
-  );
+async function history(database, company, id = null, justOne = 0, ) {
+  const params = [company];
+
+  let query = `
+    SELECT
+      e.name,
+      e.id,
+      ar.attendance_date,
+      ar.check_in_time,
+      ar.check_out_time,
+      ar.status,
+      ar.delay_minutes,
+      ar.deduction_days
+    FROM attendance_records ar
+    JOIN employees e
+      ON e.id = ar.employee_id
+    WHERE ar.company = $1
+  `;
+
+  if (justOne === 1) {
+    query += ` AND e.id = $2`;
+    params.push(id);
+  }
+
+  query += ` ORDER BY ar.attendance_date DESC`;
+
+  const result = await database.query(query, params);
+
   return result.rows;
 }
 
@@ -90,8 +101,7 @@ async function findRecord(database, id, company) {
   const result = await database.query(
     `SELECT ar.*, e.employee_id, u.email, d.name AS department
      FROM attendance_records ar JOIN employees e ON e.id = ar.employee_id
-    JOIN users u ON u.id = e.user_id JOIN departments d ON d.id = e.department_id
-    WHERE ar.id = $1 AND e.company = $2 AND u.company = $2 AND d.company = $2`, [id, company]
+    WHERE ar.id = $1 AND e.company = $2 `, [id, company]
   );
   return result.rows[0] || null;
 }

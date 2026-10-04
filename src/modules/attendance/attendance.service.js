@@ -80,8 +80,8 @@ async function checkOut(request) {
   finally { client.release(); }
 }
 
-async function history(company) {
-  return model.history(pool, company);
+async function history(company, id = null , justOne = 0) {
+  return model.history(pool, company, id, justOne);
 }
 
 

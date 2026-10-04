@@ -32,6 +32,17 @@ async function history(req, res) {
   }
 }
 
+async function historyEmployee(req, res) {
+  try {
+    return res.json({
+      success: true,
+      data: await service.history(req.user.company, req.params.id , 1) 
+    });
+  } catch (e) {
+    return errorResponse(res, e);
+  }
+}
+
 async function listDaleyByEmployee(req, res) {
   try {
     return res.json({
@@ -81,4 +92,4 @@ async function location(req, res) {
 // async function late(req, res) { try { return res.json({ success: true, data: await service.listByStatus(req.user.company, "late") }); } catch (e) { return errorResponse(res, e); } }
 
 // async function absent(req, res) { try { return res.json({ success: true, data: await service.listByStatus(req.user.company, "absent") }); } catch (e) { return errorResponse(res, e); } }
-module.exports = {location, checkIn, checkOut, history, details, listByEmployee, listDaleyByEmployee };
+module.exports = {location, checkIn, checkOut, history, details, listByEmployee, listDaleyByEmployee, historyEmployee };
