@@ -1,9 +1,5 @@
 {
-  "name" : "Fathy Ali", 
-  "jop_title" : "Security Engineer", 
-  "phone_number" : "0111111111",
-  "start_time" : "09:09:00", 
-  "end_time" : "09:09:09", 
-  "username" : "ab", 
-  "password" : "hdj"
+ "employees" : 3, 
+ "total_deduction_day": 81, 
+ "total_delay_min" : 12.50
 }

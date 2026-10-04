@@ -122,6 +122,24 @@ async function attendanceRules(companyId) {
   return roules;
 }
 
+async function reportDetails(companyId, startDate, endDate) {
+  const rows = await model.reportDetails(pool, companyId, startDate, endDate);
+  return rows.map((row) => ({
+    name: row.name,
+    total_delay: Number(row.total_delay),
+    total_deduction: Number(row.total_deduction),
+  }));
+}
+
+async function reportOverview(companyId, startDate, endDate) {
+  const row = await model.reportOverview(pool, companyId, startDate, endDate);
+  return {
+    employees: Number(row.employees),
+    total_deduction_day: Number(row.total_deduction_day),
+    total_delay_min: Number(row.total_delay_min),
+  };
+}
+
 async function updateAttendanceRules(companyId, settings) {
   const roules = await model.updateAttendanceSettings(pool, companyId, settings);
   return roules;
@@ -137,5 +155,7 @@ module.exports = {
   getAttendanceSettings: () => model.listAttendanceSettings(pool),
   updateAttendanceSettings,
   attendanceRules,
-  updateAttendanceRules
+  updateAttendanceRules,
+  reportDetails,
+  reportOverview
 };

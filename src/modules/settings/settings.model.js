@@ -97,6 +97,41 @@ async function attendanceRules(database, id) {
   return result.rows || null;
 }
 
+async function reportDetails(database, companyId, startDate, endDate) {
+  const result = await database.query(
+    `SELECT
+       e.name,
+       COALESCE(SUM(ar.delay_minutes), 0) AS total_delay,
+       COALESCE(SUM(ar.deduction_days), 0) AS total_deduction
+     FROM employees e
+     LEFT JOIN attendance_records ar
+       ON ar.employee_id = e.id
+       AND ($2::date IS NULL OR ar.attendance_date >= $2::date)
+       AND ($3::date IS NULL OR ar.attendance_date <= $3::date)
+     WHERE e.company = $1
+     GROUP BY e.id, e.name
+     ORDER BY e.name`,
+    [companyId, startDate, endDate]
+  );
+  return result.rows;
+}
+
+async function reportOverview(database, companyId, startDate, endDate) {
+  const result = await database.query(
+    `SELECT
+       COUNT(DISTINCT employee_id) AS employees,
+       COALESCE(SUM(deduction_days), 0) AS total_deduction_day,
+       COALESCE(SUM(delay_minutes), 0) AS total_delay_min
+     FROM attendance_records
+     WHERE company = $1
+       AND delay_minutes > 0
+       AND ($2::date IS NULL OR attendance_date >= $2::date)
+       AND ($3::date IS NULL OR attendance_date <= $3::date)`,
+    [companyId, startDate, endDate]
+  );
+  return result.rows[0];
+}
+
 async function updateAttendanceSettings(database, companyId, settings) {
   const client = await database.connect();
 
@@ -197,5 +232,7 @@ module.exports = {
   hrProfile,
   hrProfileUpdate,
   attendanceRules,
+  reportDetails,
+  reportOverview,
   updateAttendanceSettings
 };

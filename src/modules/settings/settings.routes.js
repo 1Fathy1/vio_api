@@ -12,5 +12,7 @@ router.get("/hr-profile", controller.getHrProfile);
 router.put("/hr-profile-update/:id", controller.updateProfile);
 router.get("/attendance-rules", controller.attendanceRules);
 router.put("/attendance-rules", controller.updateAttendanceRules);
+router.get("/report/details", controller.reportDetails);
+router.get("/report/overviwe", controller.reportOverview);
 
 module.exports = router;

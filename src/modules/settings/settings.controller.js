@@ -2,6 +2,28 @@ const service = require("./settings.service");
 
 async function settings() {}
 
+function getReportDateRange(request) {
+	const startDate = request.query.start_date ?? request.query.strat_date ?? null;
+	const endDate = request.query.end_date ?? null;
+	const validDate = (value) => {
+		if (value === null) return true;
+		if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+		const [year, month, day] = value.split("-").map(Number);
+		const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+		const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+		return year > 0 && month >= 1 && month <= 12 && day >= 1 && day <= daysInMonth[month - 1];
+	};
+
+	if (!validDate(startDate) || !validDate(endDate)) {
+		return { error: "start_date and end_date must be valid dates in YYYY-MM-DD format" };
+	}
+	if (startDate && endDate && startDate > endDate) {
+		return { error: "start_date must be before or equal to end_date" };
+	}
+
+	return { startDate, endDate };
+}
+
 async function getLocation(request, response) {
 	const { id } = request.params;
 
@@ -123,6 +145,44 @@ async function updateAttendanceRules(request, response) {
 	}
 }
 
+async function reportDetails(request, response) {
+	const dateRange = getReportDateRange(request);
+	if (dateRange.error) {
+		return response.status(400).json({ success: false, message: dateRange.error });
+	}
+
+	try {
+		const data = await service.reportDetails(
+			request.user.company,
+			dateRange.startDate,
+			dateRange.endDate
+		);
+		return response.json({ data });
+	} catch (error) {
+		console.error("Report details query failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to load report details" });
+	}
+}
+
+async function reportOverview(request, response) {
+	const dateRange = getReportDateRange(request);
+	if (dateRange.error) {
+		return response.status(400).json({ success: false, message: dateRange.error });
+	}
+
+	try {
+		const data = await service.reportOverview(
+			request.user.company,
+			dateRange.startDate,
+			dateRange.endDate
+		);
+		return response.json(data);
+	} catch (error) {
+		console.error("Report overview query failed:", error.message);
+		return response.status(500).json({ success: false, message: "Failed to load report overview" });
+	}
+}
 
 
-module.exports = { updateAttendanceRules, settings, getLocation, updateLocation, getHrProfile, updateProfile, attendanceRules };
+
+module.exports = { updateAttendanceRules, settings, getLocation, updateLocation, getHrProfile, updateProfile, attendanceRules, reportDetails, reportOverview };
