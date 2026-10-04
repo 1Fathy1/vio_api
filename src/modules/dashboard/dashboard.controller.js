@@ -3,17 +3,8 @@ const activityLogModel = require("./models/activity-log.model");
 const pool = require("../../config/db");
 
 async function getStats(request, response) {
-  const timeframe = request.query.timeframe || "today";
-
-  if (!attendanceModel.TIMEFRAMES[timeframe]) {
-    return response.status(400).json({
-      success: false,
-      message: "timeframe must be today, this_week, or this_month",
-    });
-  }
-
   try {
-    const data = await attendanceModel.getStats(pool, timeframe, request.user.company);
+    const data = await attendanceModel.getStats(pool, request.user.company);
     return response.json({ success: true, data });
   } catch (error) {
     console.error("Dashboard stats query failed:", error.message);

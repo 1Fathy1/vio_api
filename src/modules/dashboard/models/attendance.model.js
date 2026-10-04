@@ -9,19 +9,8 @@ const CHART_RANGES = {
   monthly: 30,
 };
 
-async function getStats(database, timeframe, company) {
-  const result = await database.query(`
-    SELECT
-      COUNT(*) FILTER (WHERE LOWER(ar.status) IN ('present', 'on_time'))::int AS present_count,
-      COUNT(*) FILTER (WHERE LOWER(ar.status) = 'late')::int AS late_count,
-      COUNT(*) FILTER (WHERE LOWER(ar.status) = 'absent')::int AS absent_count,
-      COUNT(*) FILTER (WHERE LOWER(ar.status) IN ('leave', 'on_leave'))::int AS leave_count,
-      (SELECT COUNT(*)::int FROM employees WHERE LOWER(status) = 'active' AND company = $1) AS total_employees
-    FROM attendance_records ar JOIN employees e ON e.id = ar.employee_id
-    WHERE ar.attendance_date >= ${TIMEFRAMES[timeframe]}
-      AND ar.attendance_date <= CURRENT_DATE
-      AND e.company = $1
-  `, [company]);
+async function getStats(database, company) {
+  const result = await database.query(`select count(*) from attendance_records where status = 'حضور' AND company = $1 AND attendance_date = current_date ;`, [company]);
 
   return result.rows[0];
 }

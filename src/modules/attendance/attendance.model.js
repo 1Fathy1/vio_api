@@ -90,7 +90,7 @@ async function history(database, company, id = null, justOne = 0, ) {
     params.push(id);
   }
 
-  query += ` ORDER BY ar.attendance_date DESC`;
+  query += ` ORDER BY ar.created_at DESC`;
 
   const result = await database.query(query, params);
 

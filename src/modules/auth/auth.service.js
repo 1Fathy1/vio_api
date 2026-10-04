@@ -69,14 +69,22 @@ function signRefreshToken(userId) {
 }
 
 function verifyToken(token, expectedType) {
-  const payload = jwt.verify(token, getJwtSecret());
+  let payload;
+  try {
+    payload = jwt.verify(token, getJwtSecret());
+  } catch (error) {
+    if (expectedType === "refresh" && error instanceof jwt.JsonWebTokenError) {
+      throw new Error("INVALID_REFRESH_TOKEN");
+    }
+    throw error;
+  }
 
   if (
     typeof payload === "string" ||
     payload.type !== expectedType ||
     typeof payload.sub !== "string"
   ) {
-    throw new Error("Invalid token");
+    throw new Error(expectedType === "refresh" ? "INVALID_REFRESH_TOKEN" : "Invalid token");
   }
 
   if (expectedType === "access" && (!payload.company || !payload.name)) {
