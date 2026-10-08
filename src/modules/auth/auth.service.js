@@ -214,7 +214,6 @@ async function login(input) {
 
 async function loginEmployee(input) {
   const client = await pool.connect();
-  console.log(input)
 
   try {
     await models.transaction.begin(client);
@@ -223,15 +222,14 @@ async function loginEmployee(input) {
       client,
       input.username
     );
-    console.log(user)
 
 
     if (!user || input.password !== user.password) {
-      throw new Error("INVALID_CREDENTIALS");
+      throw new Error("اسم المستخدم او كلمه السر غير صحيحه");
     }
 
     if (!user.status) {
-      throw new Error("ACCOUNT_INACTIVE");
+      throw new Error("هذا الحساب معلق مؤقتا, تواصل مع المدير");
     }
 
     // ==========================
@@ -243,15 +241,13 @@ async function loginEmployee(input) {
       user.id
     );
 
-    console.log(device) // null - First Login
-
     if (device) {
       // الموظف له جهاز مسجل
 
       if (
         device.device_identifier !== input.device_identifier
       ) {
-        throw new Error("DEVICE_NOT_ALLOWED");
+        throw new Error("تم تسجيل الحساب علي جهاز اخر");
       }
 
       // تحديث آخر استخدام
