@@ -238,7 +238,7 @@ async function loginEmployee(input) {
     if (!user.device_request) {
       throw new Error("هذا الحساب مسجل علي جهازاخر");
     }else{
-      await models.user.updateDeviceRequest(user.id);
+      await models.user.updateDeviceRequest(client, user.id);
     }
 
     // ==========================
