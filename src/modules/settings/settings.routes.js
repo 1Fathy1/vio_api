@@ -14,5 +14,6 @@ router.get("/attendance-rules", controller.attendanceRules);
 router.put("/attendance-rules", controller.updateAttendanceRules);
 router.get("/report/details", controller.reportDetails);
 router.get("/report/overviwe", controller.reportOverview);
+router.get("/device/change-request",controller.changeRequest );
 
 module.exports = router;

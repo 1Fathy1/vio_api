@@ -235,46 +235,10 @@ async function loginEmployee(input) {
     // ==========================
     // Device Validation
     // ==========================
-
-    const device = await models.device.findByEmployeeId(
-      client,
-      user.id
-    );
-
-    if (device) {
-      // الموظف له جهاز مسجل
-
-      if (
-        device.device_identifier !== input.device_identifier
-      ) {
-        throw new Error("تم تسجيل الحساب علي جهاز اخر");
-      }
-
-      // تحديث آخر استخدام
-      await models.device.updateLastUsedAt(
-        client,
-        user.id
-      );
-    } else {
-      // الموظف ليس له جهاز مسجل
-        console.log("Request", user.device_request) // True
-      if (!user.device_request) {
-        throw new Error("DEVICE_NOT_APPROVED");
-      }
-
-      // تسجيل أول جهاز
-      await models.device.create(client, {
-        employeeId: user.id,
-        deviceIdentifier: input.device_identifier,
-        deviceName: input.deviceName,
-      });
-
-      // إيقاف السماح بتسجيل أجهزة جديدة
-      await models.user.updateDeviceRequest(
-        client,
-        user.id,
-        false
-      );
+    if (!user.device_request) {
+      throw new Error("هذا الحساب مسجل علي جهازاخر");
+    }else{
+      await models.user.updateDeviceRequest(user.id);
     }
 
     // ==========================
@@ -283,22 +247,6 @@ async function loginEmployee(input) {
 
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user.id);
-    // console.log("Access Token", accessToken);
-    // console.log("Refresh Token", refreshToken);
-
-    // await models.session.create(client, {
-    //   userId: user.id,
-    //   tokenHash: hashToken(accessToken),
-    //   ipAddress: null,
-    //   userAgent: input.deviceName || null,
-    //   expiresAt: getTokenExpiry(accessToken),
-    // });
-
-    // await models.refreshToken.create(client, {
-    //   userId: user.id,
-    //   tokenHash: hashToken(refreshToken),
-    //   expiresAt: getTokenExpiry(refreshToken),
-    // });
 
     await models.transaction.commit(client);
 

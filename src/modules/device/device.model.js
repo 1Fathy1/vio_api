@@ -72,9 +72,25 @@ async function update(database, employeeId, data) {
   return result.rows[0] || null;
 }
 
+
+async function changeRequest(database, employeeId) {
+  const result = await database.query(
+    `
+    update devices 
+      set change_device = TRUE 
+      where employee_id = $1 ; 
+    RETURNING *
+    `,
+    [employeeId]
+  );
+
+  return result.rows[0] || null;
+}
+
 module.exports = {
   findByEmployeeId,
   create,
   updateLastUsedAt,
   update,
+  changeRequest
 };

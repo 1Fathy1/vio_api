@@ -59,17 +59,16 @@ async function deleteById(database, userId, company) {
 
 async function updateDeviceRequest(
   database,
-  employeeId,
-  value
+  employeeId
 ) {
   const result = await database.query(
     `
     UPDATE employees
-    SET device_request = $1
-    WHERE id = $2
+    SET device_request = FALSE
+    WHERE id = $1
     RETURNING *
     `,
-    [value, employeeId]
+    [employeeId]
   );
 
   return result.rows[0] || null;

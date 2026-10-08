@@ -1,5 +1,6 @@
 const pool = require("../../config/db");
 const model = require("./settings.model");
+const device = require("./../device/device.model")
 
 function validateSettings(settings) {
   console.log("Here?")
@@ -145,6 +146,11 @@ async function updateAttendanceRules(companyId, settings) {
   return roules;
 }
 
+async function changeRequest(employeeId) {
+  const result = await device.changeRequest(pool, employeeId);
+  return result;
+}
+
 module.exports = {
   getLocation: (id, companyId) => model.location(pool, id, companyId),
   updateLocation,
@@ -157,5 +163,6 @@ module.exports = {
   attendanceRules,
   updateAttendanceRules,
   reportDetails,
-  reportOverview
+  reportOverview,
+  changeRequest
 };

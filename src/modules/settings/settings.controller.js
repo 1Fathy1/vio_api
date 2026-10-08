@@ -183,6 +183,20 @@ async function reportOverview(request, response) {
 	}
 }
 
+async function changeRequest(request, response) {
+	try {
+		const result = await service.changeRequest(request.user.sub);
+		if (!result) {
+			return response.status(500).json({ success: false, message: "حدث خطاء ما برجاء التواصل مع المطور" });
+		}
+
+		return response.json({ success: true, data: profile });
+	} catch (error) {
+		console.error("HR profile query failed:", error.message);
+		return response.status(500).json({ success: false, message: "فشل طلب تغيير الجهاز برجاء المحاوله لاحقا" });
+	}
+}
 
 
-module.exports = { updateAttendanceRules, settings, getLocation, updateLocation, getHrProfile, updateProfile, attendanceRules, reportDetails, reportOverview };
+
+module.exports = {changeRequest, updateAttendanceRules, settings, getLocation, updateLocation, getHrProfile, updateProfile, attendanceRules, reportDetails, reportOverview };

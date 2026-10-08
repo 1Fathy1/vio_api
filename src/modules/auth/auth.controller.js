@@ -106,16 +106,15 @@ async function logout(request, response) {
 }
 
 async function login_employee(request, response) {
-  const { username, password, device_identifier, deviceName  } = request.body || {};
+  const { username, password } = request.body || {};
 
-  if (!username || !password || !device_identifier || !deviceName) {
+  if (!username || !password ) {
     return response.status(400).json({success: false, message: "all filed are required"})
   }
 
   try {
-    // console.log(username, password)
-    
-    const data = await authService.loginEmployee({  username, password, device_identifier, deviceName });
+
+    const data = await authService.loginEmployee({  username, password });
     return response.json({ success: true, data });
   } catch (error) {
     return response.json({message: error.message});
