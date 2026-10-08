@@ -50,7 +50,7 @@ async function listDaleyByEmployee(req, res) {
       data: await service.listDaleyByEmployee(req.user.sub, req.user.company)
     });
   } catch (e) {
-    return errorResponse(res, e);
+    return res.json({success : 'false', message: e.message});
   }
 }
 
