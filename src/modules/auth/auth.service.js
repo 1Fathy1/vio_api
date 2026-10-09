@@ -257,7 +257,7 @@ async function loginEmployee(input) {
       );
     } else {
       // الموظف ليس له جهاز مسجل
-        console.log("Request", user.device_request) // True
+        console.log("Request", user.change_device) // True
       if (!user.device_request) {
         throw new Error("DEVICE_NOT_APPROVED");
       }

@@ -6,45 +6,48 @@ function isValidEmail(email) {
 
 function sendAuthError(response, error) {
   const errors = {
-    ACCOUNT_ALREADY_EXISTS: [409, "Email or phone number is already registered"],
-    COMPANY_NOT_ASSIGNED: [403, "The account is not assigned to a company"],
-    INVALID_CREDENTIALS: [401, "Invalid credentials"],
-    INVALID_OLD_PASSWORD: [401, "Current password is incorrect"],
-    ACCOUNT_INACTIVE: [403, "Account is inactive"],
-    INVALID_REFRESH_TOKEN: [401, "Invalid or expired refresh token"],
-    USER_NOT_FOUND: [404, "User not found"],
-    INVALID_RESET_TOKEN: [400, "Invalid or expired reset token"],
-    INVALID_OTP: [400, "Invalid or expired OTP"],
+    ACCOUNT_ALREADY_EXISTS: [409, "البريد الإلكتروني أو رقم الهاتف مسجل بالفعل"],
+    COMPANY_NOT_ASSIGNED: [403, "هذا الحساب غير مرتبط بشركة"],
+    INVALID_CREDENTIALS: [401, "بيانات تسجيل الدخول غير صحيحة"],
+    INVALID_OLD_PASSWORD: [401, "كلمة المرور الحالية غير صحيحة"],
+    ACCOUNT_INACTIVE: [403, "الحساب غير نشط"],
+    INVALID_REFRESH_TOKEN: [401, "انتهت صلاحية رمز التحديث أو أنه غير صالح"],
+    USER_NOT_FOUND: [404, "المستخدم غير موجود"],
+    INVALID_RESET_TOKEN: [400, "انتهت صلاحية رمز إعادة تعيين كلمة المرور أو أنه غير صالح"],
+    INVALID_OTP: [400, "انتهت صلاحية رمز التحقق أو أنه غير صالح"],
+    DEVICE_NOT_APPROVED: [403, "لم يتم السماح بتسجيل الدخول من هذا الجهاز"],
+    "اسم المستخدم او كلمه السر غير صحيحه": [401, "اسم المستخدم أو كلمة المرور غير صحيحة"],
+    "هذا الحساب معلق مؤقتا, تواصل مع المدير": [403, "هذا الحساب موقوف مؤقتًا، يرجى التواصل مع المسؤول"],
+    "تم تسجيل الحساب علي جهاز اخر": [403, "الحساب مسجل على جهاز آخر"],
   };
-  const [status, message] = errors[error.message] || [500, "Authentication request failed"];
+  const [status, message] = errors[error.message] || [500, "تعذر إتمام طلب المصادقة، يرجى المحاولة لاحقًا"];
 
   if (status === 500) {
     console.error("Authentication error:", error.stack || error);
   }
 
-  const details = process.env.NODE_ENV === "production" ? undefined : error.stack || error.message;
-  return response.status(status).json({ success: false, message, ...(details && { details }) });
+  return response.status(status).json({ success: false, message });
 }
 
 async function register(request, response) {
   const { name, email, phone_number: phoneNumber, password, company } = request.body || {};
 
   if (typeof name !== "string" || name.trim().length === 0) {
-    return response.status(400).json({ success: false, message: "name is required" });
+    return response.status(400).json({ success: false, message: "الاسم مطلوب" });
   }
 
   if (!isValidEmail(email)) {
-    return response.status(400).json({ success: false, message: "A valid email is required" });
+    return response.status(400).json({ success: false, message: "يرجى إدخال بريد إلكتروني صحيح" });
   }
 
   if (typeof phoneNumber !== "string" || phoneNumber.trim().length === 0) {
-    return response.status(400).json({ success: false, message: "phone_number is required" });
+    return response.status(400).json({ success: false, message: "رقم الهاتف مطلوب" });
   }
 
   if (typeof password !== "string" || password.length < 8) {
     return response.status(400).json({
       success: false,
-      message: "password must be at least 8 characters",
+      message: "يجب ألا تقل كلمة المرور عن 8 أحرف",
     });
   }
 
@@ -53,7 +56,7 @@ async function register(request, response) {
     (typeof company === "string" && /^[1-9]\d*$/.test(company));
 
   if (!validCompany) {
-    return response.status(400).json({ success: false, message: "a positive company id is required" });
+    return response.status(400).json({ success: false, message: "معرّف الشركة مطلوب ويجب أن يكون رقمًا موجبًا" });
   }
 
   try {
@@ -77,7 +80,7 @@ async function login(request, response) {
   if (!isValidEmail(email) || typeof password !== "string" || password.length < 8) {
     return response.status(400).json({
       success: false,
-      message: "A valid email and password of at least 8 characters are required",
+      message: "يرجى إدخال بريد إلكتروني صحيح وكلمة مرور لا تقل عن 8 أحرف",
     });
   }
 
@@ -94,7 +97,7 @@ async function logout(request, response) {
   const accessToken = request.get("authorization").slice("Bearer ".length);
 
   if (typeof refreshToken !== "string" || refreshToken.length === 0) {
-    return response.status(400).json({ success: false, message: "refresh_token is required" });
+    return response.status(400).json({ success: false, message: "رمز التحديث مطلوب" });
   }
 
   try {
@@ -109,7 +112,7 @@ async function login_employee(request, response) {
   const { username, password } = request.body || {};
 
   if (!username || !password ) {
-    return response.status(400).json({success: false, message: "all filed are required"})
+    return response.status(400).json({ success: false, message: "اسم المستخدم وكلمة المرور مطلوبان" });
   }
 
   try {
@@ -117,7 +120,7 @@ async function login_employee(request, response) {
     const data = await authService.loginEmployee({  username, password });
     return response.json({ success: true, data });
   } catch (error) {
-    return response.json({message: error.message});
+    return sendAuthError(response, error);
   }
 }
 
@@ -125,7 +128,7 @@ async function refreshToken(request, response) {
   const { refresh_token: token } = request.body || {};
 
   if (typeof token !== "string" || token.length === 0) {
-    return response.status(400).json({ success: false, message: "refresh_token is required" });
+    return response.status(400).json({ success: false, message: "رمز التحديث مطلوب" });
   }
 
   try {
@@ -146,20 +149,20 @@ async function resetPassword(request, response) {
   if (!oldPassword || !newPassword || !confirmPassword) {
     return response.status(400).json({
       success: false,
-      message: "all filed are required",
+      message: "جميع الحقول مطلوبة",
     });
   }
 
   if (newPassword !== confirmPassword) {
     return response.status(400).json({
       success: false,
-      message: "Password confirmation does not match",
+      message: "تأكيد كلمة المرور غير مطابق",
     });
   }
   if (newPassword.length < 8) {
     return response.status(400).json({
       success: false,
-      message: "new_password must be at least 8 characters",
+      message: "يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف",
     });
   }
 

@@ -37,9 +37,30 @@ app.get("/test-db", async (_request, response) => {
 
     response.status(500).json({
       success: false,
-      message: "Database connection failed",
+      message: "تعذر الاتصال بقاعدة البيانات",
     });
   }
+});
+
+app.use((_request, response) => {
+  response.status(404).json({
+    success: false,
+    message: "المسار المطلوب غير موجود",
+  });
+});
+
+app.use((error, _request, response, _next) => {
+  console.error("Unhandled request error:", error);
+  const status = Number.isInteger(error.status) && error.status >= 400 && error.status < 500
+    ? error.status
+    : 500;
+
+  response.status(status).json({
+    success: false,
+    message: status === 400
+      ? "الطلب غير صالح، يرجى التحقق من البيانات المرسلة"
+      : "حدث خطأ أثناء معالجة الطلب، يرجى المحاولة لاحقًا",
+  });
 });
 
 module.exports = app;

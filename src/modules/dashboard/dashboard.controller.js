@@ -10,7 +10,7 @@ async function getStats(request, response) {
     console.error("Dashboard stats query failed:", error.message);
     return response.status(500).json({
       success: false,
-      message: "Failed to load dashboard statistics",
+      message: "تعذر تحميل إحصائيات لوحة التحكم",
     });
   }
 }
@@ -21,7 +21,7 @@ async function getCharts(request, response) {
   if (!attendanceModel.CHART_RANGES[range]) {
     return response.status(400).json({
       success: false,
-      message: "range must be weekly or monthly",
+      message: "يجب أن تكون الفترة أسبوعية أو شهرية",
     });
   }
 
@@ -32,7 +32,7 @@ async function getCharts(request, response) {
     console.error("Dashboard charts query failed:", error.message);
     return response.status(500).json({
       success: false,
-      message: "Failed to load dashboard charts",
+      message: "تعذر تحميل رسوم لوحة التحكم",
     });
   }
 }
@@ -44,7 +44,7 @@ async function getActivities(request, response) {
   if (limit < 1 || limit > 100) {
     return response.status(400).json({
       success: false,
-      message: "limit must be between 1 and 100",
+      message: "يجب أن يكون عدد النتائج بين 1 و100",
     });
   }
 
@@ -55,7 +55,7 @@ async function getActivities(request, response) {
     console.error("Dashboard activities query failed:", error.message);
     return response.status(500).json({
       success: false,
-      message: "Failed to load dashboard activities",
+      message: "تعذر تحميل أنشطة لوحة التحكم",
     });
   }
 }
@@ -70,7 +70,7 @@ async function getTodaysAttendance(request, response) {
     console.error("Today's attendance query failed:", error.message);
     return response.status(500).json({
       success: false,
-      message: "Failed to load today's attendance",
+      message: "تعذر تحميل سجلات حضور اليوم",
     });
   }
 }

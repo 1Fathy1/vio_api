@@ -1,7 +1,7 @@
 const service = require("./attendance.service");
 function errorResponse(response, error) {
-  const map = { EMPLOYEE_NOT_FOUND: [404, "Employee not found"], CHECK_IN_REQUIRED: [400, "Check-in is required first"], ATTENDANCE_NOT_FOUND: [404, "Attendance record not found"], REQUEST_NOT_FOUND: [404, "Attendance request not found"] };
-  const [status, message] = map[error.message] || [500, "Attendance request failed"];
+  const map = { EMPLOYEE_NOT_FOUND: [404, "الموظف غير موجود"], CHECK_IN_REQUIRED: [400, "يجب تسجيل الحضور أولًا"], CHECK_IN_ID_REQUIRED: [400, "معرّف تسجيل الحضور مطلوب"], ATTENDANCE_NOT_FOUND: [404, "سجل الحضور غير موجود"], REQUEST_NOT_FOUND: [404, "طلب الحضور غير موجود"] };
+  const [status, message] = map[error.message] || [500, "تعذر إتمام طلب الحضور، يرجى المحاولة لاحقًا"];
   if (status === 500) console.error(error);
   return response.status(status).json({ success: false, message });
 }
@@ -50,7 +50,7 @@ async function listDaleyByEmployee(req, res) {
       data: await service.listDaleyByEmployee(req.user.sub, req.user.company)
     });
   } catch (e) {
-    return res.json({success : 'false', message: e.message});
+    return errorResponse(res, e);
   }
 }
 
@@ -71,7 +71,7 @@ async function listByEmployee(req, res) {
       success: true,
       data: await service.listByEmployee(req.user.sub)
     });
-  } catch (e) { return e.message; }
+  } catch (e) { return errorResponse(res, e); }
 }
 
 async function location(req, res) {

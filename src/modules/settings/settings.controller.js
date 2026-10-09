@@ -15,10 +15,10 @@ function getReportDateRange(request) {
 	};
 
 	if (!validDate(startDate) || !validDate(endDate)) {
-		return { error: "start_date and end_date must be valid dates in YYYY-MM-DD format" };
+		return { error: "يجب إدخال تاريخي بداية ونهاية صالحين" };
 	}
 	if (startDate && endDate && startDate > endDate) {
-		return { error: "start_date must be before or equal to end_date" };
+		return { error: "يجب أن يكون تاريخ البداية قبل تاريخ النهاية أو مساويًا له" };
 	}
 
 	return { startDate, endDate };
@@ -29,19 +29,19 @@ async function getLocation(request, response) {
 
 	const validId = /^[1-9]\d*$/.test(id) && BigInt(id) <= 9223372036854775807n;
 	if (!validId || String(request.user.company) !== id) {
-		return response.status(404).json({ success: false, message: "Company location not found" });
+		return response.status(404).json({ success: false, message: "موقع الشركة غير موجود" });
 	}
 
 	try {
 		const location = await service.getLocation(id, request.user.company);
 		if (!location) {
-			return response.status(404).json({ success: false, message: "Company location not found" });
+			return response.status(404).json({ success: false, message: "موقع الشركة غير موجود" });
 		}
 
 		return response.json({ success: true, data: location });
 	} catch (error) {
 		console.error("Company location query failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to load company location" });
+		return response.status(500).json({ success: false, message: "تعذر تحميل موقع الشركة" });
 	}
 }
 
@@ -54,11 +54,14 @@ async function updateLocation(request, response) {
 			data: location,
 		});
 	} catch (error) {
-		if (error.message === "INVALID_LOCATION" || error.message === "INVALID_LOCATION_URL") {
-			return response.status(400).json({ success: false, message: error.message });
+		if (error.message === "INVALID_LOCATION") {
+			return response.status(400).json({ success: false, message: "بيانات موقع الشركة غير صالحة" });
+		}
+		if (error.message === "INVALID_LOCATION_URL") {
+			return response.status(400).json({ success: false, message: "رابط موقع الشركة غير صالح" });
 		}
 		console.error("Company location update failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to update company location" });
+		return response.status(500).json({ success: false, message: "تعذر تحديث موقع الشركة" });
 	}
 }
 
@@ -66,13 +69,13 @@ async function getHrProfile(request, response) {
 	try {
 		const profile = await service.getHrProfile(request.user.sub);
 		if (!profile) {
-			return response.status(404).json({ success: false, message: "HR profile not found" });
+			return response.status(404).json({ success: false, message: "الملف الشخصي غير موجود" });
 		}
 
 		return response.json({ success: true, data: profile });
 	} catch (error) {
 		console.error("HR profile query failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to load HR profile" });
+		return response.status(500).json({ success: false, message: "تعذر تحميل الملف الشخصي" });
 	}
 }
 
@@ -81,16 +84,16 @@ async function updateProfile(request, response) {
 	const body = request.body;
 	const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id);
 	if (!validId) {
-		return response.status(400).json({ success: false, message: "Invalid HR profile ID" });
+		return response.status(400).json({ success: false, message: "معرّف الملف الشخصي غير صالح" });
 	}
 	if (String(request.user.sub) !== id) {
-		return response.status(403).json({ success: false, message: "You can only update your own HR profile" });
+		return response.status(403).json({ success: false, message: "يمكنك تحديث ملفك الشخصي فقط" });
 	}
 
 	const fields = ["email", "phone_number", "name"];
 	if (!body || typeof body !== "object" || Array.isArray(body) ||
 			fields.some((field) => typeof body[field] !== "string" || !body[field].trim())) {
-		return response.status(400).json({ success: false, message: "Email, phone_number, and name are required" });
+		return response.status(400).json({ success: false, message: "البريد الإلكتروني ورقم الهاتف والاسم مطلوبة" });
 	}
 
 	try {
@@ -100,7 +103,7 @@ async function updateProfile(request, response) {
 			name: body.name.trim(),
 		});
 		if (!profile) {
-			return response.status(404).json({ success: false, message: "HR profile not found" });
+			return response.status(404).json({ success: false, message: "الملف الشخصي غير موجود" });
 		}
 
 		return response.json({
@@ -110,10 +113,10 @@ async function updateProfile(request, response) {
 		});
 	} catch (error) {
 		if (error.code === "23505") {
-			return response.status(409).json({ success: false, message: "Email or phone number already exists" });
+			return response.status(409).json({ success: false, message: "البريد الإلكتروني أو رقم الهاتف مسجل بالفعل" });
 		}
 		console.error("HR profile update failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to update HR profile" });
+		return response.status(500).json({ success: false, message: "تعذر تحديث الملف الشخصي" });
 	}
 }
 
@@ -121,13 +124,13 @@ async function attendanceRules(request, response) {
 	try {
 		const profile = await service.attendanceRules(request.user.company);
 		if (!profile) {
-			return response.status(404).json({ success: false, message: "felid to load the data" });
+			return response.status(404).json({ success: false, message: "لا توجد بيانات" });
 		}
 
 		return response.json({ success: true, data: profile });
 	} catch (error) {
 		console.error("HR profile query failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to load HR profile" });
+		return response.status(500).json({ success: false, message: "تعذر تحميل قواعد الحضور" });
 	}
 }
 
@@ -135,13 +138,13 @@ async function updateAttendanceRules(request, response) {
 	try {
 		const profile = await service.updateAttendanceRules(request.user.company, request.body);
 		if (!profile) {
-			return response.status(404).json({ success: false, message: "felid to load the data" });
+			return response.status(404).json({ success: false, message: "لا توجد بيانات" });
 		}
 
 		return response.json({ success: true, data: profile });
 	} catch (error) {
 		console.error("HR profile query failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to load HR profile" });
+		return response.status(500).json({ success: false, message: "تعذر تحميل قواعد الحضور" });
 	}
 }
 
@@ -160,7 +163,7 @@ async function reportDetails(request, response) {
 		return response.json({ data });
 	} catch (error) {
 		console.error("Report details query failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to load report details" });
+		return response.status(500).json({ success: false, message: "تعذر تحميل تفاصيل التقرير" });
 	}
 }
 
@@ -179,7 +182,7 @@ async function reportOverview(request, response) {
 		return response.json(data);
 	} catch (error) {
 		console.error("Report overview query failed:", error.message);
-		return response.status(500).json({ success: false, message: "Failed to load report overview" });
+		return response.status(500).json({ success: false, message: "تعذر تحميل ملخص التقرير" });
 	}
 }
 
@@ -187,16 +190,45 @@ async function changeRequest(request, response) {
 	try {
 		const result = await service.changeRequest(request.user.sub);
 		if (!result) {
-			return response.status(500).json({ success: false, message: "حدث خطاء ما برجاء التواصل مع المطور" });
+			return response.status(500).json({ success: false, message: "حدث خطأ، يرجى التواصل مع الدعم الفني" });
 		}
 
 		return response.json({ success: true, data: profile });
 	} catch (error) {
 		console.error("HR profile query failed:", error.message);
-		return response.status(500).json({ success: false, message: "فشل طلب تغيير الجهاز برجاء المحاوله لاحقا" });
+		return response.status(500).json({ success: false, message: "تعذر إرسال طلب تغيير الجهاز، يرجى المحاولة لاحقًا" });
+	}
+}
+
+async function deviceInfo(request, response) {
+	try {
+		const result = await service.deviceInfo(request.user.company);
+		if (!result) {
+			return response.status(400).json({ success: false, message: "لا توجد بيانات" });
+		}
+
+		return response.json({ success: true, data: result });
+	} catch (error) {
+		console.error("Device information query failed:", error.message);
+		return response.status(500).json({ success: false, message: "تعذر تحميل بيانات الأجهزة، يرجى المحاولة لاحقًا" });
+	}
+}
+
+async function allowLogin(request, response) {
+	try {
+		const { employeeId, deviceId } = request.body;
+		const result = await service.allowLogin(employeeId, deviceId);
+		if (!result) {
+			return response.status(400).json({ success: false, message: "تعذر تفعيل تسجيل الدخول أو حذف الجهاز، يرجى التحقق من البيانات" });
+		}
+
+		return response.json({ success: true, data: result });
+	} catch (error) {
+		console.error("Allow login and delete device failed:", error.message);
+		return response.status(500).json({ success: false, message: "تعذر تفعيل تسجيل الدخول وحذف الجهاز، يرجى المحاولة لاحقًا" });
 	}
 }
 
 
 
-module.exports = {changeRequest, updateAttendanceRules, settings, getLocation, updateLocation, getHrProfile, updateProfile, attendanceRules, reportDetails, reportOverview };
+module.exports = {allowLogin, deviceInfo, changeRequest, updateAttendanceRules, settings, getLocation, updateLocation, getHrProfile, updateProfile, attendanceRules, reportDetails, reportOverview };

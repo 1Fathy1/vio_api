@@ -6,7 +6,7 @@ function requireAuth(request, response, next) {
   if (!authorization || !authorization.startsWith("Bearer ")) {
     return response.status(401).json({
       success: false,
-      message: "Authentication required",
+      message: "يجب تسجيل الدخول أولًا",
     });
   }
 
@@ -16,7 +16,7 @@ function requireAuth(request, response, next) {
   } catch (_error) {
     return response.status(401).json({
       success: false,
-      message: "Invalid or expired access token",
+      message: "انتهت صلاحية تسجيل الدخول أو أن رمز الدخول غير صالح",
     });
   }
 }

@@ -151,6 +151,16 @@ async function changeRequest(employeeId) {
   return result;
 }
 
+async function deviceInfo(companyId) {
+  const result = await device.deviceInfo(pool, companyId);
+  return result;
+}
+
+async function allowLogin(employeeId, deviceId) {
+  const result = await device.allowLogin(pool, employeeId, deviceId);
+  return result;
+}
+
 module.exports = {
   getLocation: (id, companyId) => model.location(pool, id, companyId),
   updateLocation,
@@ -164,5 +174,7 @@ module.exports = {
   updateAttendanceRules,
   reportDetails,
   reportOverview,
-  changeRequest
+  changeRequest,
+  deviceInfo,
+  allowLogin
 };

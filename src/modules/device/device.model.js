@@ -78,7 +78,7 @@ async function changeRequest(database, employeeId) {
     `
     update devices 
       set change_device = TRUE 
-      where employee_id = $1 ; 
+      where employee_id = $1 
     RETURNING *
     `,
     [employeeId]
@@ -86,11 +86,65 @@ async function changeRequest(database, employeeId) {
 
   return result.rows[0] || null;
 }
+async function deviceInfo(database, companyId) {
+  const result = await database.query(
+    `
+    SELECT
+    employees.id AS employee_id,
+    employees.name,
+    employees.status,
+    employees.allow_login AS login_allow,
+    devices.last_used_at,
+    devices.change_device AS device_request,
+    devices.id AS device_id
+FROM employees
+JOIN devices
+    ON devices.employee_id = employees.id
+where employees.company = $1;
+    `,
+    [companyId]
+  );
+
+  return result.rows || null;
+}
+
+async function allowLogin(database, employeeId, deviceId) {
+  const employeeResult = await database.query(
+    `
+    UPDATE employees
+    SET allow_login = TRUE
+    WHERE id = $1
+    RETURNING *
+    `,
+    [employeeId]
+  );
+
+  if (!employeeResult.rows[0]) {
+    return null;
+  }
+
+  const deviceResult = await database.query(
+    `
+    DELETE FROM devices
+    WHERE id = $1
+    RETURNING *
+    `,
+    [deviceId]
+  );
+
+  if (!deviceResult.rows[0]) {
+    return null;
+  }
+
+  return employeeResult.rows[0];
+}
 
 module.exports = {
   findByEmployeeId,
   create,
   updateLastUsedAt,
   update,
-  changeRequest
+  changeRequest,
+  deviceInfo,
+  allowLogin
 };

@@ -14,6 +14,8 @@ router.get("/attendance-rules", controller.attendanceRules);
 router.put("/attendance-rules", controller.updateAttendanceRules);
 router.get("/report/details", controller.reportDetails);
 router.get("/report/overviwe", controller.reportOverview);
-router.get("/device/change-request",controller.changeRequest );
+router.get("/device/change-request",controller.changeRequest ); // under test
+router.get("/devices/info",controller.deviceInfo ); // under test
+router.put("/devices/allow-login",controller.allowLogin ); // under test
 
 module.exports = router;
