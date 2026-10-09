@@ -259,7 +259,7 @@ async function loginEmployee(input) {
       // الموظف ليس له جهاز مسجل
         console.log("Request", user.change_device) // True
       if (!user.device_request) {
-        throw new Error("DEVICE_NOT_APPROVED");
+        throw new Error("لم يتم قبول طلب تغير الجهاز من المدير");
       }
 
       // تسجيل أول جهاز
