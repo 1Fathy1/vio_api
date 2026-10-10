@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const pool = require("../../config/db");
 const models = require("./models");
 
-const ACCESS_TOKEN_EXPIRES_IN = "30d";
+const ACCESS_TOKEN_EXPIRES_IN = "3m";
 const REFRESH_TOKEN_EXPIRES_IN = "30d";
 const RESET_TOKEN_TTL_MINUTES = 15;
 const OTP_TTL_MINUTES = 15;
