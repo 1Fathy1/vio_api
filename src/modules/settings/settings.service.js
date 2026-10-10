@@ -170,7 +170,6 @@ async function attendanceRules(companyId) {
 async function reportDetails(companyId, startDate, endDate) {
   const rows = await model.reportDetails(pool, companyId, startDate, endDate);
   const rules = await attendanceRules(companyId);
-
   return rows.map((row) => ({
     name: row.name,
     total_delay: Number(row.total_delay),
