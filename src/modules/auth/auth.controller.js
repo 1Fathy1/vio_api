@@ -109,15 +109,17 @@ async function logout(request, response) {
 }
 
 async function login_employee(request, response) {
-  const { username, password } = request.body || {};
+        //   deviceIdentifier: input.device_identifier,
+        // deviceName: input.deviceName,
+  const { username, password, device_identifier, deviceName  } = request.body || {};
 
-  if (!username || !password ) {
-    return response.status(400).json({ success: false, message: "اسم المستخدم وكلمة المرور مطلوبان" });
+  if (!username || !password || !device_identifier || !deviceName ) {
+    return response.status(400).json({ success: false, message: "معلومات تسجيل الدخول او بيانات الهاتف غير صحيحه" });
   }
 
   try {
 
-    const data = await authService.loginEmployee({  username, password });
+    const data = await authService.loginEmployee({  username, password, device_identifier, deviceName });
     return response.json({ success: true, data });
   } catch (error) {
     return sendAuthError(response, error);

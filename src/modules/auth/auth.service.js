@@ -214,6 +214,7 @@ async function login(input) {
 
 async function loginEmployee(input) {
   const client = await pool.connect();
+  console.log(input)
 
   try {
     await models.transaction.begin(client);
@@ -257,8 +258,8 @@ async function loginEmployee(input) {
       );
     } else {
       // الموظف ليس له جهاز مسجل
-        console.log("Request", user.change_device) // True
-      if (!user.device_request) {
+        console.log("Request", user.allow_login) // True
+      if (!user.allow_login) {
         throw new Error("لم يتم قبول طلب تغير الجهاز من المدير");
       }
 
@@ -283,22 +284,6 @@ async function loginEmployee(input) {
 
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user.id);
-    // console.log("Access Token", accessToken);
-    // console.log("Refresh Token", refreshToken);
-
-    // await models.session.create(client, {
-    //   userId: user.id,
-    //   tokenHash: hashToken(accessToken),
-    //   ipAddress: null,
-    //   userAgent: input.deviceName || null,
-    //   expiresAt: getTokenExpiry(accessToken),
-    // });
-
-    // await models.refreshToken.create(client, {
-    //   userId: user.id,
-    //   tokenHash: hashToken(refreshToken),
-    //   expiresAt: getTokenExpiry(refreshToken),
-    // });
 
     await models.transaction.commit(client);
 

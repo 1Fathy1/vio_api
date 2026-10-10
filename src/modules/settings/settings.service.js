@@ -26,6 +26,50 @@ async function updateAttendanceSettings(settings) {
   return model.upsertAttendanceSettings(pool, validateSettings(settings));
 }
 
+function calculateDeductionDays(totalDelay, rules) {
+  if (!Number.isInteger(totalDelay) || totalDelay < 0) {
+    throw new Error("INVALID_TOTAL_DELAY");
+  }
+
+  const deductionsByMinutes = new Map();
+  for (const { setting_key: key, setting_value: value } of rules) {
+    const keyMatch = /^(\d+)_min$/.exec(key);
+    if (!keyMatch) continue;
+
+    const valueMatch = /^(\d+)(?:\.(\d{1,2}))?_day$/.exec(value);
+    if (!valueMatch) {
+      throw new Error("INVALID_ATTENDANCE_RULES");
+    }
+
+    const minutes = Number(keyMatch[1]);
+    if (!Number.isSafeInteger(minutes) || minutes <= 0) {
+      throw new Error("INVALID_ATTENDANCE_RULES");
+    }
+
+    const fractionalDays = (valueMatch[2] || "").padEnd(2, "0");
+    const deductionHundredths = Number(valueMatch[1]) * 100 + Number(fractionalDays);
+    deductionsByMinutes.set(minutes, deductionHundredths);
+  }
+
+  const fullHours = Math.floor(totalDelay / 60);
+  const remainingMinutes = totalDelay % 60;
+  const hourlyDeduction = deductionsByMinutes.get(60);
+  if (fullHours > 0 && hourlyDeduction === undefined) {
+    throw new Error("INVALID_ATTENDANCE_RULES");
+  }
+
+  let totalDeductionHundredths = fullHours * (hourlyDeduction || 0);
+  const remainingRule = [...deductionsByMinutes.entries()]
+    .filter(([minutes]) => minutes < 60 && minutes <= remainingMinutes)
+    .sort(([first], [second]) => second - first)[0];
+
+  if (remainingRule) {
+    totalDeductionHundredths += remainingRule[1];
+  }
+
+  return totalDeductionHundredths / 100;
+}
+
 function coordinatesFromLocationUrl(locationUrl) {
   if (typeof locationUrl !== "string" || !locationUrl.trim()) {
     throw new Error("INVALID_LOCATION");
@@ -125,10 +169,12 @@ async function attendanceRules(companyId) {
 
 async function reportDetails(companyId, startDate, endDate) {
   const rows = await model.reportDetails(pool, companyId, startDate, endDate);
+  const rules = await attendanceRules(companyId);
+
   return rows.map((row) => ({
     name: row.name,
     total_delay: Number(row.total_delay),
-    total_deduction: Number(row.total_deduction),
+    total_deduction: calculateDeductionDays(Number(row.total_delay), rules || []),
   }));
 }
 
@@ -172,6 +218,7 @@ module.exports = {
   updateAttendanceSettings,
   attendanceRules,
   updateAttendanceRules,
+  calculateDeductionDays,
   reportDetails,
   reportOverview,
   changeRequest,

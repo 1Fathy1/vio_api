@@ -64,7 +64,7 @@ async function updateDeviceRequest(
   const result = await database.query(
     `
     UPDATE employees
-    SET device_request = FALSE
+    SET allow_login = FALSE
     WHERE id = $1
     RETURNING *
     `,
