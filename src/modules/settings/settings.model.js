@@ -34,7 +34,6 @@ WHERE c.id = $1;
 async function updateLocation(database, companyId, data) {
   console.log("Location Information", data);
   console.log("Company Information", data.info);
-console.log(Object.keys(data.info).length);
 
   const client = await database.connect();
 
