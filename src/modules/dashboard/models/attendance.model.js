@@ -10,7 +10,7 @@ const CHART_RANGES = {
 };
 
 async function getStats(database, company) {
-  const result = await database.query(`select count(*) from attendance_records where status = 'حضور' AND company = $1 AND attendance_date = current_date ;`, [company]);
+  const result = await database.query(`select count(*) from attendance_records where company = $1 AND attendance_date = current_date ;`, [company]);
 
   return result.rows[0];
 }
@@ -39,27 +39,9 @@ async function getCharts(database, range, company) {
 async function getTodaysAttendance(database, status, company) {
   const result = await database.query(
     `
-      SELECT
-        e.id AS employee_id,
-        e.employee_id AS employee_number,
-        u.email,
-        d.name AS department,
-        COALESCE(ar.status, 'absent') AS status,
-        ar.check_in_time,
-        ar.check_out_time,
-        ar.delay_minutes
-      FROM employees e
-      JOIN users u ON u.id = e.user_id
-      JOIN departments d ON d.id = e.department_id
-      LEFT JOIN attendance_records ar
-        ON ar.employee_id = e.id
-        AND ar.attendance_date = CURRENT_DATE
-      WHERE LOWER(e.status) = 'active'
-        AND e.company = $1 AND u.company = $1 AND d.company = $1
-        AND ($2::text IS NULL OR LOWER(COALESCE(ar.status, 'absent')) = LOWER($2))
-      ORDER BY e.employee_id ASC
+     select count(*) from attendance_records where company = $1 AND attendance_date = current_date
     `,
-    [company, status]
+    [company]
   );
 
   return result.rows;
