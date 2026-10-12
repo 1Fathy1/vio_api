@@ -77,7 +77,7 @@ async function register(request, response) {
 async function login(request, response) {
   const { email, password } = request.body || {};
 
-  if ( email || typeof password !== "string" || password.length < 8) {
+  if ( typeof password !== "string" || password.length < 8) {
     return response.status(400).json({
       success: false,
       message: "يرجى إدخال بريد إلكتروني صحيح وكلمة مرور لا تقل عن 8 أحرف",
