@@ -23,10 +23,7 @@ async function create(input, company) {
   try {
     await transactionModel.begin(client);
     try {
-      if (!(await employeeModel.findDepartment(client, input.department_id, company))) {
-        throw new Error("DEPARTMENT_NOT_FOUND");
-      }
-
+     
       const employee = await employeeModel.create(client, {
         name: input.full_name,
         company,
