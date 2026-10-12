@@ -113,47 +113,141 @@ function coordinatesFromLocationUrl(locationUrl) {
   throw new Error("INVALID_LOCATION_URL");
 }
 
+
+function parseCoordinates(url) {
+  const patterns = [
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+    /@(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+
+    if (match) {
+      const latitude = Number(match[1]);
+      const longitude = Number(match[2]);
+
+      if (
+        latitude >= -90 && latitude <= 90 &&
+        longitude >= -180 && longitude <= 180
+      ) {
+        return { latitude, longitude };
+      }
+    }
+  }
+
+  try {
+    const parsedUrl = new URL(url);
+
+    for (const key of ["query", "q", "ll", "center"]) {
+      const value = parsedUrl.searchParams.get(key);
+
+      if (!value) continue;
+
+      const match = value.match(
+        /^\s*(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)\s*$/
+      );
+
+      if (match) {
+        const latitude = Number(match[1]);
+        const longitude = Number(match[2]);
+
+        if (
+          latitude >= -90 && latitude <= 90 &&
+          longitude >= -180 && longitude <= 180
+        ) {
+          return { latitude, longitude };
+        }
+      }
+    }
+  } catch {
+    // الرابط غير صالح
+  }
+
+  return null;
+}
+
+
+
+function findCoordinates(text) {
+  const patterns = [
+    /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/,
+    /@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/,
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+
+    const latitude = Number(match[1]);
+    const longitude = Number(match[2]);
+
+    if (
+      Number.isFinite(latitude) &&
+      Number.isFinite(longitude) &&
+      Math.abs(latitude) <= 90 &&
+      Math.abs(longitude) <= 180
+    ) {
+      return { latitude, longitude };
+    }
+  }
+
+  return null;
+}
+
 async function extractCoordinates(url) {
   try {
+    const parsed = new URL(url);
+
+    if (
+      !["maps.app.goo.gl", "www.google.com",
+         "google.com", "maps.google.com"].includes(parsed.hostname)
+    ) {
+      throw new Error("Unsupported Google Maps URL");
+    }
+
     const response = await fetch(url, {
-      method: "HEAD",
       redirect: "follow",
+      signal: AbortSignal.timeout(15000),
+      headers: { "User-Agent": "Mozilla/5.0" },
     });
 
+    if (!response.ok) {
+      throw new Error(`Google returned HTTP ${response.status}`);
+    }
+
     const finalUrl = response.url;
+    console.log("Final URL:", finalUrl);
 
-    let match = finalUrl.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/);
+    let result = findCoordinates(finalUrl);
+    if (result) return result;
 
-    if (match) {
-      return {
-        latitude: Number(match[1]),
-        longitude: Number(match[2]),
-      };
-    }
+    const html = await response.text();
+    console.log("HTML length:", html.length);
 
-    match = finalUrl.match(/@(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/);
+    result = findCoordinates(html);
+    if (result) return result;
 
-    if (match) {
-      return {
-        latitude: Number(match[1]),
-        longitude: Number(match[2]),
-      };
-    }
-
+    console.log("Coordinates not found in URL or HTML");
     return null;
   } catch (error) {
-    console.error(error);
+    console.error("extractCoordinates:", error.message);
     return null;
   }
 }
+
+
+
 
 async function updateLocation(companyId, body) {
   if (!body || typeof body !== "object" || Array.isArray(body)) {
     throw new Error("INVALID_LOCATION");
   }
 
-  const coordinates = await extractCoordinates(body.location_url);
-  console.log(coordinates)
+  console.log(body);
+
+  const coordinates = await extractCoordinates(body.location_url.trim());
+  console.log("coordinates : ", coordinates)
   
   return model.updateLocation(pool, companyId, {
     locationUrl: body.location_url.trim(),
