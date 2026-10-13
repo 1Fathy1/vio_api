@@ -110,7 +110,7 @@ async function listDaleyByEmployee(id) {
   const result = await model.listDaleyByEmployee(pool, id);
 
   if (!result || !result.length) {
-    throw new Error("لا يوجد تاخير");
+    return ("لا يوجد تاخير");
   }
 
   return result.map((item) => {
@@ -144,9 +144,9 @@ async function listDaleyByEmployee(id) {
 
 async function listByEmployee(employee_id) {
   const result = await model.listByEmployee(pool, employee_id);
-  //  console.log(result);
+   console.log(result);
   if (!result || result.length === 0) {
-    throw new Error("ATTENDANCE_NOT_FOUND");
+   return "ATTENDANCE_NOT_FOUND";
   }
 
   console.log(employee_id)
