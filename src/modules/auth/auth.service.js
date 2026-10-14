@@ -4,8 +4,8 @@ const jwt = require("jsonwebtoken");
 const pool = require("../../config/db");
 const models = require("./models");
 
-const ACCESS_TOKEN_EXPIRES_IN = "30d";
-const REFRESH_TOKEN_EXPIRES_IN = "30d";
+const ACCESS_TOKEN_EXPIRES_IN = "15m";
+const REFRESH_TOKEN_EXPIRES_IN = "2m";
 const RESET_TOKEN_TTL_MINUTES = 15;
 const OTP_TTL_MINUTES = 15;
 
@@ -214,7 +214,6 @@ async function login(input) {
 
 async function loginEmployee(input) {
   const client = await pool.connect();
-  console.log(input)
 
   try {
     await models.transaction.begin(client);
@@ -257,8 +256,6 @@ async function loginEmployee(input) {
         user.id
       );
     } else {
-      // الموظف ليس له جهاز مسجل
-        console.log("Request", user.allow_login) // True
       if (!user.allow_login) {
         throw new Error("لم يتم قبول طلب تغير الجهاز من المدير");
       }

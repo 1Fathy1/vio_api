@@ -1,4 +1,5 @@
 async function create(database, data) {
+  console.log(data);
   await database.query(
     `
       INSERT INTO sessions

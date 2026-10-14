@@ -29,12 +29,11 @@ async function checkIn(request) {
       hour12: false,
     });
 
-    // console.log(request.user)
+
     const delay_minutes = getDelayMinutes(
       request.user.startTime,
       egyptTime
     );
-    console.log(delay_minutes)
 
     const input = {
       employee_id: request.user.sub,
@@ -62,7 +61,6 @@ async function checkOut(request) {
  
   const client = await pool.connect();
   if (!request.body.checkId) throw new Error("CHECK_IN_ID_REQUIRED");
-  console.log(request.body.checkId);
   try {
     await transaction.begin(client);
     const egyptTime = new Date().toLocaleTimeString("en-GB", {
@@ -71,8 +69,7 @@ async function checkOut(request) {
     });
     const result = await await model.check(client, request.body.checkId);
     if(result && result.status == 'انصراف') throw new Error("CHECK_IN_REQUIRED");
-   const record = await model.updateCheckOut(client, request.body.checkId, egyptTime);
-   console.log(record); 
+   const record = await model.updateCheckOut(client, request.body.checkId, egyptTime); 
    if (!record) throw new Error("CHECK_IN_REQUIRED");
     await transaction.commit(client);
     return { record };
@@ -130,14 +127,11 @@ async function listDaleyByEmployee(id) {
 
 async function listByEmployee(employee_id) {
   const result = await model.listByEmployee(pool, employee_id);
-   console.log(result);
   if (!result || result.length === 0) {
    return "ATTENDANCE_NOT_FOUND";
   }
 
-  console.log(employee_id)
   return result.map((item) => {
-    console.log(item.attendance_date);
     let workTimeByH = 0;
     let workTimeByM = 0;
 
@@ -211,23 +205,11 @@ async function location(request) {
   ) {
     throw new Error("قيم الاحدثيات غير صحيحه");
   }
-  console.log(request.user.company);
   const result = await model.location(pool, request.user.company);
-
-  // لينك اللوكيشن المخزن للكافيه أو الشركة
-  // const url = result.location;
-
-  // المدى المسموح بالمتر
   const radius = result.radius_meters;
-  console.log(result);
 
-  // استخراج إحداثيات الكافيه من اللينك
-  // const params = new URL(url).searchParams;
   const [cafeLatitude, cafeLongitude] = [result.latitude, result.longitude]
-  console.log("cafeLatitude" , cafeLatitude) ; 
-  console.log("cafeLongitude" , cafeLongitude);
 
-  // إحداثيات الموظف الحالية (استاتيك مؤقتا)
   const employeeLatitude = latitude;
   const employeeLongitude = longitude;
 
@@ -238,11 +220,10 @@ async function location(request) {
     cafeLatitude,
     cafeLongitude
   );
-  console.log("distance =", distance);
 
   // هل الموظف داخل النطاق؟
   const isInside = distance <= radius;
-  console.log(isInside)
+
   return {
     cafeLocation: {
       latitude: cafeLatitude,
@@ -257,24 +238,5 @@ async function location(request) {
     isInside, // true لو داخل النطاق
   };
 }
-
-
-
-
-// async function requests(userId, company, input) {
-//   if (input.action === "create") {
-//     const currentEmployee = await employee(userId, company);
-//     return model.createRequest(pool, { employeeId: currentEmployee.id, date: input.request_date, checkIn: input.requested_check_in, checkOut: input.requested_check_out, reason: input.reason });
-//   }
-//   if (input.action === "update") {
-//     const result = await model.updateRequest(pool, input.id, input.status, userId, company);
-//     if (!result) throw new Error("REQUEST_NOT_FOUND");
-//     return result;
-//   }
-//   return model.requests(pool, input, company);
-// }
-
-// async function today(company, status) { return model.today(pool, company, status); }
-// async function listByStatus(company, status) { return model.today(pool, company, status); }
 
 module.exports = { location, checkIn, checkOut, history, details, listByEmployee, listDaleyByEmployee };
