@@ -1,5 +1,6 @@
 const pool = require("../config/db");
 const deviceModel = require("../modules/device/device.model");
+const authService = require("../modules/auth/auth.service");
 
 async function verifyRegisteredDevice(request, response, next) {
   const deviceIdentifier = request.body?.device_identifier;
@@ -18,6 +19,9 @@ async function verifyRegisteredDevice(request, response, next) {
     );
 
     if (!registeredDevice || registeredDevice.device_identifier !== deviceIdentifier) {
+      const accessToken = request.get("authorization").slice("Bearer ".length);
+      await authService.logoutAccessToken(request.user.sub, accessToken);
+
       return response.status(403).json({
         success: false,
         message: "هذا الجهاز غير مسجل لهذا الموظف",

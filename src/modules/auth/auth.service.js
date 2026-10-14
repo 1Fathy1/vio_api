@@ -285,6 +285,14 @@ async function loginEmployee(input) {
     const accessToken = signAccessToken(user);
     const refreshToken = signRefreshToken(user.id);
 
+    await models.session.create(client, {
+      userId: user.id,
+      tokenHash: hashToken(accessToken),
+      ipAddress: null,
+      userAgent: null,
+      expiresAt: getTokenExpiry(accessToken),
+    });
+
     await models.transaction.commit(client);
 
     return {
@@ -339,6 +347,13 @@ async function logout(userId, accessToken, refreshToken) {
     client.release();
   }
 }
+async function logoutAccessToken(userId, accessToken) {
+  await models.session.deleteByToken(pool, userId, hashToken(accessToken));
+}
+
+async function isAccessTokenActive(userId, accessToken) {
+  return models.session.existsByToken(pool, userId, hashToken(accessToken));
+}
 
 async function refreshAccessToken(refreshToken) {
   const payload = verifyToken(refreshToken, "refresh");
@@ -353,7 +368,17 @@ async function refreshAccessToken(refreshToken) {
   }
 
   const user = await models.user.findByEmail(pool, storedUser.email);
-  return { access_token: signAccessToken(user) };
+  const accessToken = signAccessToken(user);
+
+  await models.session.create(pool, {
+    userId: user.id,
+    tokenHash: hashToken(accessToken),
+    ipAddress: null,
+    userAgent: null,
+    expiresAt: getTokenExpiry(accessToken),
+  });
+
+  return { access_token: accessToken };
 }
 
 async function resetPassword(id, newPassword, oldPassword) {
@@ -409,5 +434,7 @@ module.exports = {
   refreshAccessToken,
   resetPassword,
   verifyToken,
-  loginEmployee
+  loginEmployee,
+  logoutAccessToken,
+  isAccessTokenActive
 };

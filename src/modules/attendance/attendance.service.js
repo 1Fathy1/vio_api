@@ -92,20 +92,6 @@ async function details(id, company) {
   return result;
 }
 
-// async function listDaleyByEmployee(id) {
-//   const result = await model.listDaleyByEmployee(pool, id);
-//   if (!result)
-//     throw new Error("ATTENDANCE_NOT_FOUND");
-//   return result;
-// }
-
-// async function adjust(userId, company, input) {
-//   const result = await model.adjust(pool, input, company);
-//   if (!result) throw new Error("ATTENDANCE_NOT_FOUND");
-//   await model.createAdjustment(pool, { recordId: input.id, adjustedBy: userId, reason: input.reason, oldStatus: input.old_status, newStatus: input.status });
-//   return result;
-// }
-
 async function listDaleyByEmployee(id) {
   const result = await model.listDaleyByEmployee(pool, id);
 

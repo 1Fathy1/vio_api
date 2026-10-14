@@ -16,8 +16,24 @@ async function deleteByToken(database, userId, tokenHash) {
   );
 }
 
+async function existsByToken(database, userId, tokenHash) {
+  const result = await database.query(
+    `
+      SELECT 1
+      FROM sessions
+      WHERE user_id = $1
+        AND token_hash = $2
+        AND expires_at > NOW()
+      LIMIT 1
+    `,
+    [userId, tokenHash]
+  );
+
+  return result.rowCount > 0;
+}
+
 async function deleteByUser(database, userId) {
   await database.query("DELETE FROM sessions WHERE user_id = $1", [userId]);
 }
 
-module.exports = { create, deleteByToken, deleteByUser };
+module.exports = { create, deleteByToken, existsByToken, deleteByUser };
