@@ -10,7 +10,7 @@ async function verifyLocation(request, response, next) {
     const location = await attendanceService.location(request);
 
     if (!location.isInside) {
-      return response.status(403).json({
+      return response.status(404).json({
         success: false,
         message: "لا يمكن تسجيل الحضور إلا من موقع الشركة",
       });
