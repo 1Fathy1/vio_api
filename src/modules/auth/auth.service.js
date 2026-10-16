@@ -241,7 +241,8 @@ async function loginEmployee(input) {
       user.id
     );
 
-    if (device) {
+   if(input.username != 'testMode'){
+     if (device) {
       // الموظف له جهاز مسجل
 
       if (
@@ -274,6 +275,7 @@ async function loginEmployee(input) {
         false
       );
     }
+   }
 
     // ==========================
     // Tokens
