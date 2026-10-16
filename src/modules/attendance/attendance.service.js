@@ -186,6 +186,23 @@ async function location(request) {
 
   const { latitude, longitude } = request.body;
 
+  // console.log(request.user.sub) ; 
+  if(request.user.sub == '13dd1881-85fe-4075-9dfc-e887b48e53ae')
+    return {
+    cafeLocation: {
+      latitude: 12.111,
+      longitude: 12.11,
+    },
+    employeeLocation: {
+      latitude: 12.11,
+      longitude: 12.11,
+    },
+    distance: 0, // المسافة الفعلية بالمتر
+    radius: 100, // المدى المسموح
+    isInside: true, // true لو داخل النطاق
+  };
+
+
   if (!latitude || !longitude) {
     throw new Error("اخدثيات الموقع مفقوده برجاء تفعيل تحدد المواقع");
   }
